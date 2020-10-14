@@ -2,11 +2,6 @@ import requests
 from bs4 import BeautifulSoup
 import json
 
-#category matters and thats it
-'''
-https://redsky.target.com/redsky_aggregations/v1/web/plp_search_v1?key=bleemblam&category=5xtlx&channel=WEB&count=24&default_purchasability_filter=true&include_sponsored=true&offset=0&page=%2Fc%2F5xtlx&platform=desktop&pricing_store_id=2105&store_ids=2105%2C1971%2C922%2C350%2C1465&useragent=Mozilla%2F5.0++Gecko&visitor_id=jklykhj
-
-'''
 
 class TargetScraper:
 
@@ -35,9 +30,6 @@ class TargetScraper:
             user_search = user_search.replace(' ', '+')
         return user_search
 
-    '''
-    https://redsky.target.com/redsky_aggregations/v1/web/plp_search_v1?key=bleemfdskj8&category={item_id}&channel=WEB&count=24&default_purchasability_filter=true&include_sponsored=true&offset=0&page=%2Fc%2F5xtlx&platform=desktop&pricing_store_id=2105&store_ids=2105%2C1971%2C922%2C350%2C1465&useragent=Mozilla%2F5.0++cko&visitor_id=8977
-    '''
     def get_redsky_products(self, item_id):
         res = self.fetch(f'https://redsky.target.com/redsky_aggregations/v1/web/plp_search_v1?key=bleemfdskj8&category={item_id}&channel=WEB&count=24&default_purchasability_filter=true&include_sponsored=true&offset=0&page=%2Fc%2F5xtlx&platform=desktop&pricing_store_id=2105&store_ids=2105%2C1971%2C922%2C350%2C1465&useragent=Mozilla%2F5.0++cko&visitor_id=8977')
         content = BeautifulSoup(res.text, 'lxml')
@@ -49,9 +41,6 @@ class TargetScraper:
             product_list = page_json['data']['search']['products']
             print(product_list)
 
-    '''
-    https://redsky.target.com/redsky_aggregations/v1/web/plp_search_v1?key=ff373293829fksdl1&channel=WEB&count=24&default_purchasability_filter=true&include_sponsored=true&keyword=toilet+paper&offset=0&page=%2Fs%2F{product_name}&platform=desktop&pricing_store_id=2105&store_ids=2105%2C1971%2C922%2C350%2C1465&useragent=Safari&visitor_id=01287beelp
-    '''
     def get_products(self, product_name):
         if ' ' in product_name:
             product_name = product_name.replace(' ', '+')
