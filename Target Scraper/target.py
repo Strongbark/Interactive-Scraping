@@ -8,8 +8,16 @@ User provides string of product they want to scrape and receives product info.
 import requests
 from bs4 import BeautifulSoup
 import json
+import ast
+import urllib
+import os
+import csv
+import time
 
 class TargetScraper:
+
+    #crawl delay defined in redsky's robot.txt
+    crawl_delay = 1
 
     #returns item id for item user searches for
     def prompt(self):
@@ -53,22 +61,71 @@ class TargetScraper:
     def get_products(self, product_name):
         if ' ' in product_name:
             product_name = product_name.replace(' ', '+')
-    
+
         product_page_res = self.fetch(f'https://redsky.target.com/redsky_aggregations/v1/web/plp_search_v1?key=ff373293829fksdl1&channel=WEB&count=24&default_purchasability_filter=true&include_sponsored=true&keyword={product_name}&offset=0&page=%2Fs%2F{product_name}&platform=desktop&pricing_store_id=2105&store_ids=2105%2C1971%2C922%2C350%2C1465&useragent=Safari&visitor_id=01287beelp')
         content = BeautifulSoup(product_page_res.text, 'lxml')
+        page_text = content.text
         try:
-            page_json = json.loads(content.text)
+            page_json = json.loads(page_text)
+        
         except:
             page_json = None
+            print('error parsing json')
+        
         if page_json:
+            #check data needed for pagination
+            meta_data_list = page_json['data']['search']['search_response']['meta_data']
+            if meta_data_list[8]['name'] == 'totalPages':
+                total_pages = meta_data_list[8]['value']
+            else:
+                total_pages = 0
+            print(f'Total pages: {str(total_pages)}')
+
             product_list = page_json['data']['search']['products']
-            print(product_list)
+            #print(product_list)
+            for product in product_list:
+                info = {
+                    'Title' : product['item']['product_description']['title'],
+                    'Price' : product['price']['formatted_current_price'],
+                    'URL' : product['item']['enrichment']['buy_url'],
+
+            }
+                self.to_csv(info)
+            offset = 0
+            for offset in range(24, int(total_pages) * 24, 24):
+                print(offset)
+                next_page_res = self.fetch(f'https://redsky.target.com/redsky_aggregations/v1/web/plp_search_v1?key=ff373293829fksdl1&channel=WEB&count=24&default_purchasability_filter=true&include_sponsored=true&keyword={product_name}&offset={offset}&page=%2Fs%2F{product_name}&platform=desktop&pricing_store_id=2105&store_ids=2105%2C1971%2C922%2C350%2C1465&useragent=Safari&visitor_id=01287beelp')
+                next_page_content = BeautifulSoup(next_page_res.text, 'lxml')
+                next_page_json = json.loads(next_page_content.text)
+                product_list = next_page_json['data']['search']['products']
+                for product in product_list:
+                    info = {
+                    'Title' : product['item']['product_description']['title'],
+                    'Price' : product['price']['formatted_current_price'],
+                    'URL' : product['item']['enrichment']['buy_url'],
+
+                }
+                    self.to_csv(info)
+                time.sleep(0.5)
             
     #returns response and prints debug info
     def fetch(self, url):
         res = requests.get(url)
         print(f'HTTP GET request to {res.url} | Status code : {res.status_code}')
         return res
+
+    def to_csv(self, item):
+        # Check if "wine.csv" file exists
+        wine_exists = os.path.isfile('products.csv')
+        # Append data to CSV file
+        with open('products.csv', 'a') as csv_file:
+            # Init dictionary writer
+            writer = csv.DictWriter(csv_file, fieldnames=item.keys())
+            # Write header only ones
+            if not wine_exists:
+                writer.writeheader()
+            # Write entry to CSV file
+            writer.writerow(item)
 
     def run(self):
         while True:
