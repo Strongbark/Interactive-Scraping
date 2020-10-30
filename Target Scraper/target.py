@@ -1,6 +1,6 @@
 '''
 Script to scrape any products from Target.com
-User providesv product they want to scrape and receives product prices. 
+User provides product they want to scrape and receives product prices + ratings. 
 '''
 import requests
 import os
