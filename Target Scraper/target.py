@@ -25,7 +25,7 @@ class TargetScraper:
             user_search = user_search.replace(' ', '+')
         return user_search
             
-    #implement extraction logic here... all info on products for search term can be found here.
+    #all info on products for search term can be found here.
     def get_products(self, product_name):
         #TODO: implement conditional ratings_and_reviews extraction logic
         if ' ' in product_name:
@@ -57,24 +57,62 @@ class TargetScraper:
             product_list = page_json['data']['search']['products']
             #print(product_list)
             for product in product_list:
+                title = None
+                price = None
+                url = None
+                rating = ''
+                review_count = ''
+                title = product['item']['product_description']['title']
+                price = product['price']['formatted_current_price']
+                url = product['item']['enrichment']['buy_url']
+                try:
+                    rating = str(product['ratings_and_reviews']['statistics']['rating']['average'])
+                except:
+                    print(f'no rating found for {title}')
+                try:
+                    review_count = str(product['ratings_and_reviews']['statistics']['rating']['count'])
+                except:
+                    print(f'no review count found for {title}')
                 info = {
                     'Title' : product['item']['product_description']['title'],
                     'Price' : product['price']['formatted_current_price'],
-                    'URL' : product['item']['enrichment']['buy_url'],
+                    'Stars' : rating,
+                    'Review Count' : review_count,
+                    'URL' : product['item']['enrichment']['buy_url']
+
 
             }
                 self.to_csv(info)
             offset = 0
             for offset in range(24, int(total_pages) * 24, 24):
+                title = None
+                price = None
+                url = None
+                rating = ''
+                review_count = ''
                 print(offset)
                 next_page_res = self.fetch(f'https://redsky.target.com/redsky_aggregations/v1/web/plp_search_v1?key=ff373293829fksdl1&channel=WEB&count=24&default_purchasability_filter=true&include_sponsored=true&keyword={product_name}&offset={offset}&page=%2Fs%2F{product_name}&platform=desktop&pricing_store_id=2105&store_ids=2105%2C1971%2C922%2C350%2C1465&useragent=Safari&visitor_id=01287beelp')
                 next_page_json = next_page_res.json()
                 product_list = next_page_json['data']['search']['products']
+
                 for product in product_list:
+                    title = product['item']['product_description']['title']
+                    price = product['price']['formatted_current_price']
+                    url = product['item']['enrichment']['buy_url']
+                    try:
+                        rating = str(product['ratings_and_reviews']['statistics']['rating']['average'])
+                    except:
+                        print(f'no rating found for {title}')
+                    try:
+                        review_count = str(product['ratings_and_reviews']['statistics']['rating']['count'])
+                    except:
+                        print(f'no review count found for {title}')
                     info = {
-                    'Title' : product['item']['product_description']['title'],
-                    'Price' : product['price']['formatted_current_price'],
-                    'URL' : product['item']['enrichment']['buy_url'],
+                    'Title' : title ,
+                    'Price' : price,
+                    'Stars' : rating,
+                    'Review Count' : review_count,
+                    'URL' : url
 
                 }
                     self.to_csv(info)
